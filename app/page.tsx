@@ -1,113 +1,386 @@
-import Image from 'next/image';
+'use client';
 
-export default function Home() {
+import { useState, useRef } from 'react';
+import { Download, Palette, Type, Settings } from 'lucide-react';
+
+interface IconConfig {
+  mainText: string;
+  logoText: string;
+  primaryColor: string;
+  auxiliaryColor: string;
+  backgroundColor: string;
+  contrast: number;
+  strokeWidth: number;
+  shadowIntensity: number;
+  borderRadius: number;
+  layoutType: 'horizontal' | 'vertical' | 'stacked';
+}
+
+const presetStyles = {
+  pornhub: {
+    name: 'PornHub风格',
+    primaryColor: '#ff9000',
+    auxiliaryColor: '#ffffff',
+    backgroundColor: '#000000',
+    contrast: 100,
+    strokeWidth: 2,
+    shadowIntensity: 20,
+    borderRadius: 4,
+    layoutType: 'horizontal' as const
+  },
+  youtube: {
+    name: 'YouTube风格',
+    primaryColor: '#ff0000',
+    auxiliaryColor: '#ffffff',
+    backgroundColor: '#ffffff',
+    contrast: 100,
+    strokeWidth: 1,
+    shadowIntensity: 10,
+    borderRadius: 8,
+    layoutType: 'horizontal' as const
+  },
+  modern: {
+    name: '现代风格',
+    primaryColor: '#3b82f6',
+    auxiliaryColor: '#ffffff',
+    backgroundColor: '#1f2937',
+    contrast: 90,
+    strokeWidth: 1,
+    shadowIntensity: 15,
+    borderRadius: 12,
+    layoutType: 'horizontal' as const
+  }
+};
+
+export default function IconGenerator() {
+  const [config, setConfig] = useState<IconConfig>({
+    mainText: 'Brand',
+    logoText: 'Logo',
+    primaryColor: '#ff9000',
+    auxiliaryColor: '#ffffff',
+    backgroundColor: '#000000',
+    contrast: 100,
+    strokeWidth: 2,
+    shadowIntensity: 20,
+    borderRadius: 4,
+    layoutType: 'horizontal'
+  });
+
+  const [selectedStyle, setSelectedStyle] = useState('pornhub');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const updateConfig = (updates: Partial<IconConfig>) => {
+    setConfig(prev => ({ ...prev, ...updates }));
+  };
+
+  const applyPresetStyle = (styleKey: string) => {
+    const style = presetStyles[styleKey as keyof typeof presetStyles];
+    if (style) {
+      setSelectedStyle(styleKey);
+      updateConfig({
+        primaryColor: style.primaryColor,
+        auxiliaryColor: style.auxiliaryColor,
+        backgroundColor: style.backgroundColor,
+        contrast: style.contrast,
+        strokeWidth: style.strokeWidth,
+        shadowIntensity: style.shadowIntensity,
+        borderRadius: style.borderRadius,
+        layoutType: style.layoutType
+      });
+    }
+  };
+
+  const generateSVG = () => {
+    const { mainText, logoText, primaryColor, auxiliaryColor, backgroundColor, borderRadius, shadowIntensity } = config;
+    
+    return `
+      <svg width="300" height="120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="2" stdDeviation="${shadowIntensity / 10}" flood-opacity="0.3"/>
+          </filter>
+        </defs>
+        <rect width="300" height="120" rx="${borderRadius}" fill="${backgroundColor}" filter="url(#shadow)"/>
+        <text x="30" y="45" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="${auxiliaryColor}">${mainText}</text>
+        <rect x="200" y="25" width="70" height="30" rx="${borderRadius / 2}" fill="${primaryColor}"/>
+        <text x="235" y="44" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="${backgroundColor}" text-anchor="middle">${logoText}</text>
+        <text x="30" y="75" font-family="Arial, sans-serif" font-size="10" fill="${auxiliaryColor}" opacity="0.7">风格: ${presetStyles[selectedStyle as keyof typeof presetStyles]?.name || '自定义'}</text>
+        <text x="30" y="90" font-family="Arial, sans-serif" font-size="10" fill="${auxiliaryColor}" opacity="0.7">文本: "${mainText}" + "${logoText}"</text>
+      </svg>
+    `;
+  };
+
+  const exportIcon = () => {
+    const svg = generateSVG();
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${config.mainText}-${config.logoText}-icon.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">品牌标识生成器</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            创建类似YouTube、PornHub风格的品牌标识，支持自定义文本、颜色和布局，实时预览并导出高质量的SVG标识
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Style Selection */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center mb-4">
+              <Palette className="w-5 h-5 text-blue-600 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-800">选择风格</h2>
+            </div>
+            
+            <div className="space-y-3">
+              {Object.entries(presetStyles).map(([key, style]) => (
+                <button
+                  key={key}
+                  onClick={() => applyPresetStyle(key)}
+                  className={`w-full p-4 rounded-lg border-2 transition-all duration-200 ${
+                    selectedStyle === key
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-gray-800">{style.name}</span>
+                    <div className="flex space-x-2">
+                      <div 
+                        className="w-4 h-4 rounded-full border"
+                        style={{ backgroundColor: style.primaryColor }}
+                      />
+                      <div 
+                        className="w-4 h-4 rounded-full border"
+                        style={{ backgroundColor: style.backgroundColor }}
+                      />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Parameter Settings */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center mb-4">
+              <Settings className="w-5 h-5 text-green-600 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-800">参数调整</h2>
+            </div>
+
+            <div className="space-y-6">
+              {/* Text Inputs */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">主文本</label>
+                <input
+                  type="text"
+                  value={config.mainText}
+                  onChange={(e) => updateConfig({ mainText: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Brand"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">标签文本</label>
+                <input
+                  type="text"
+                  value={config.logoText}
+                  onChange={(e) => updateConfig({ logoText: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Logo"
+                />
+              </div>
+
+              {/* Color Inputs */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">主色调</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={config.primaryColor}
+                    onChange={(e) => updateConfig({ primaryColor: e.target.value })}
+                    className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={config.primaryColor}
+                    onChange={(e) => updateConfig({ primaryColor: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">辅助色</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={config.auxiliaryColor}
+                    onChange={(e) => updateConfig({ auxiliaryColor: e.target.value })}
+                    className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={config.auxiliaryColor}
+                    onChange={(e) => updateConfig({ auxiliaryColor: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">背景色</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={config.backgroundColor}
+                    onChange={(e) => updateConfig({ backgroundColor: e.target.value })}
+                    className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={config.backgroundColor}
+                    onChange={(e) => updateConfig({ backgroundColor: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Sliders */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  对比度: {config.contrast}%
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={config.contrast}
+                  onChange={(e) => updateConfig({ contrast: parseInt(e.target.value) })}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  线条粗细: {config.strokeWidth}px
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  value={config.strokeWidth}
+                  onChange={(e) => updateConfig({ strokeWidth: parseInt(e.target.value) })}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  阴影强度: {config.shadowIntensity}%
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="50"
+                  value={config.shadowIntensity}
+                  onChange={(e) => updateConfig({ shadowIntensity: parseInt(e.target.value) })}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  圆角半径: {config.borderRadius}px
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  value={config.borderRadius}
+                  onChange={(e) => updateConfig({ borderRadius: parseInt(e.target.value) })}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+
+              {/* Layout Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">布局类型</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['horizontal', 'vertical', 'stacked'].map((layout) => (
+                    <button
+                      key={layout}
+                      onClick={() => updateConfig({ layoutType: layout as any })}
+                      className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                        config.layoutType === layout
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      {layout === 'horizontal' ? '横版' : layout === 'vertical' ? '竖版' : '位标式'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Preview and Export */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center mb-4">
+              <Type className="w-5 h-5 text-purple-600 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-800">预览和导出</h2>
+            </div>
+
+            {/* Preview */}
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-6 flex items-center justify-center">
+                <div 
+                  dangerouslySetInnerHTML={{ __html: generateSVG() }}
+                  className="transform hover:scale-105 transition-transform duration-200"
+                />
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>风格:</strong> {presetStyles[selectedStyle as keyof typeof presetStyles]?.name || '自定义'}
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>布局:</strong> {config.layoutType === 'horizontal' ? '横版' : config.layoutType === 'vertical' ? '竖版' : '位标式'}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong>文本:</strong> "{config.mainText}" + "{config.logoText}"
+              </p>
+            </div>
+
+            {/* Export Button */}
+            <button
+              onClick={exportIcon}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+            >
+              <Download className="w-5 h-5" />
+              <span>导出品牌标识</span>
+            </button>
+
+            <p className="text-xs text-gray-500 text-center mt-3">
+              导出为高质量SVG格式，支持无损缩放
+            </p>
+          </div>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }
